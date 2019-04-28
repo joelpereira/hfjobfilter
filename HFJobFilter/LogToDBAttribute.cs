@@ -1,67 +1,55 @@
-﻿using Hangfire.Client;
+﻿using System.Net.Http;
+using Hangfire.Client;
 using Hangfire.Common;
 using Hangfire.Server;
 using Hangfire.States;
 using Hangfire.Storage;
-using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.Http;
-using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 
 namespace HFJobFilter
 {
-	//public class LogToDbAttribute : JobFilterAttribute,
-	public class LogToDbAttribute : TypeFilterAttribute
-	{
-		private readonly HttpClient _httpClient;
-		public LogToDbAttribute(HttpClient client) : base(typeof(LogToDbImpl))
-		{
-			_httpClient = client;
-		}
+    //public class LogToDbAttribute : JobFilterAttribute,
+    public class LogToDbAttribute : JobFilterAttribute, IClientFilter, IServerFilter, IElectStateFilter, IApplyStateFilter
+    {
+        private HttpClient _httpClient;
+        private readonly ILogger<LogToDbAttribute> _logger;
 
+        public LogToDbAttribute(HfHttpClient hfHttpClient, ILogger<LogToDbAttribute> logger)
+        {
+            _httpClient = hfHttpClient.Client;
+            _logger = logger;
+        }
 
+        public void OnCreating(CreatingContext context)
+        {
+            // log to secondary database..
+        }
 
-		private class LogToDbImpl : JobFilterAttribute,
-	IClientFilter, IServerFilter, IElectStateFilter, IApplyStateFilter
-		{
-			private readonly HttpClient _httpClient;
+        public void OnCreated(CreatedContext context)
+        {
+            string name = context.BackgroundJob.Job.Method.Name;
 
-			public LogToDbImpl(HttpClient client)
-			{
-				_httpClient = client;
-			}
+            _logger.LogInformation(name);
+        }
 
-			public void OnCreating(CreatingContext context)
-			{
-				// log to secondary database..
-			}
+        public void OnPerforming(PerformingContext context)
+        {
+        }
 
-			public void OnCreated(CreatedContext context)
-			{
-				string name = context.BackgroundJob.Job.Method.Name;
-			}
+        public void OnPerformed(PerformedContext context)
+        {
+        }
 
-			public void OnPerforming(PerformingContext context)
-			{
-			}
+        public void OnStateElection(ElectStateContext context)
+        {
+        }
 
-			public void OnPerformed(PerformedContext context)
-			{
-			}
+        public void OnStateApplied(ApplyStateContext context, IWriteOnlyTransaction transaction)
+        {
+        }
 
-			public void OnStateElection(ElectStateContext context)
-			{
-			}
-
-			public void OnStateApplied(ApplyStateContext context, IWriteOnlyTransaction transaction)
-			{
-			}
-
-			public void OnStateUnapplied(ApplyStateContext context, IWriteOnlyTransaction transaction)
-			{
-			}
-		}
-	}
+        public void OnStateUnapplied(ApplyStateContext context, IWriteOnlyTransaction transaction)
+        {
+        }
+    }
 }
